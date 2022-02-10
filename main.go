@@ -1,6 +1,8 @@
 package main
 
-import "cliarguments/cliarguments"
+import (
+	"github.com/uniwizardcom/golang-cliarguments/cliarguments"
+)
 
 func main() {
 	cli := cliarguments.LineService{}
