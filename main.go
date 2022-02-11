@@ -31,13 +31,11 @@ func main() {
 	})
 	cli.ServiceCmdNew()
 
-	idv := cli.GetArgValue("insert-data", 0, "")
-	rlv := cli.GetArgValue("records-limit", 2, "")
-	rov := cli.GetArgValue("records-offset", 2, "")
+	idv := cli.GetArgValue("insert-data", 0, "abc")
+	rlv := cli.GetArgValue("records-limit", 1, "777")
+	rov := cli.GetArgValue("records-offset", 1, "888")
 
-	if len(idv) > 0 {
-		rl, _ := strconv.ParseInt(rlv, 10, 32)
-		ro, _ := strconv.ParseInt(rov, 10, 32)
-		fmt.Printf("records-limit=%d; records-offset=%d", rl, ro)
-	}
+	rl, _ := strconv.ParseUint(rlv, 10, 64)
+	ro, _ := strconv.ParseUint(rov, 10, 64)
+	fmt.Printf("idv: [%s]\nrecords-limit=%d\nrecords-offset=%d\n\n", idv, rl, ro)
 }

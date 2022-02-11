@@ -40,6 +40,7 @@ type LineServiceItem struct {
 	Name         string
 	Desc         string
 	DefaultValue string
+	IsValue      bool
 	Level        int
 	Related      []LineServiceItemLink
 	Action       func(*LineService)
@@ -74,24 +75,24 @@ func difference(slice1 []LineServiceItem, slice2 []LineServiceItem) []LineServic
 	return diff
 }
 
-func parseArg(arg string) (key string, level int, value string) {
+func parseArg(arg string) (key string, level int, value string, isValue bool) {
 	levIsFull := false
-	kvIsFull := false
+	isValue = false
 
 	for index := 0; index < len(arg); index++ {
 		if !levIsFull && (arg[index] == '-') {
 			level++
-		} else if !kvIsFull && (arg[index] != '=') {
+		} else if !isValue && (arg[index] != '=') {
 			levIsFull = true
 			key = key + string(arg[index])
-		} else if !kvIsFull && (arg[index] == '=') {
-			kvIsFull = true
+		} else if !isValue && (arg[index] == '=') {
+			isValue = true
 		} else {
 			value = value + string(arg[index])
 		}
 	}
 
-	return key, level, value
+	return key, level, value, isValue
 }
 
 func (cli *LineService) importItemsFromArgs() {
@@ -99,12 +100,13 @@ func (cli *LineService) importItemsFromArgs() {
 
 	for i, val := range cli.args {
 		if i > 0 {
-			key, level, value := parseArg(val)
+			key, level, value, isValue := parseArg(val)
 
 			cli.items = append(cli.items, LineServiceItem{
 				Name:         key,
 				DefaultValue: value,
 				Level:        level,
+				IsValue:      isValue,
 			})
 		}
 	}
@@ -208,7 +210,7 @@ func (cli *LineService) GetArg(name string, level int) *LineServiceItem {
 func (cli *LineService) GetArgValue(name string, level int, defaultValue string) string {
 	lsi := cli.GetArg(name, level)
 
-	if lsi != nil {
+	if (lsi != nil) && lsi.IsValue {
 		return lsi.DefaultValue
 	}
 
