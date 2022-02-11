@@ -11,3 +11,6 @@ Examples
 * $ go run main.go insert-data=fdd -records-limit=568 -records-offset=107
 * $ go run main.go insert-data -records-limit -records-offset=107
 * $ go run main.go insert-data -records-limit --records-offset=107
+
+Tags
+v1.0.1
