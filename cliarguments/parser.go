@@ -30,16 +30,24 @@ import (
 	"os"
 )
 
+type LineServiceItemLink struct {
+	Name  string
+	Level int
+}
+
 type LineServiceItem struct {
 	IsRequire    bool
 	Name         string
 	Desc         string
 	DefaultValue string
 	Level        int
-	Related      []string
+	Related      []LineServiceItemLink
+	Action       func(*LineService)
 }
 
 type LineService struct {
+	Description      string
+	Using            string
 	args             []string
 	items            []LineServiceItem
 	itemsSupported   []LineServiceItem
@@ -106,28 +114,103 @@ func (cli *LineService) SetItemSupported(item LineServiceItem) {
 	cli.itemsSupported = append(cli.itemsSupported, item)
 }
 
-func (cli *LineService) CheckForSupporting() {
+func (cli *LineService) checkForSupporting() {
 	cli.itemsUnsupported = difference(cli.items, cli.itemsSupported)
 
 	if len(cli.itemsUnsupported) > 0 {
-		fmt.Printf("There is unsapported arguments:\n")
+		cli.ShowHelp()
+		showInfoAsBetween("Arguments not supported", cli.itemsUnsupported, cli.itemsSupported)
+		exitProgram(1)
+	}
 
-		for _, item := range cli.itemsUnsupported {
-			fmt.Printf("- [%s] on level [%d] with value [%s]\n", item.Name, item.Level, item.DefaultValue)
+	// TODO: it's should be implemented
+	/* for _, item := range cli.items {
+		if item.Action != nil {
+			item.Action(cli)
+		}
+	} */
+}
 
+func (cli *LineService) checkForRequire() {
+	requiredCandidates := difference(cli.itemsSupported, cli.items)
+	required := make([]LineServiceItem, 0)
+
+	for _, item := range requiredCandidates {
+		fmt.Println()
+		if item.IsRequire {
+			required = append(required, item)
 		}
 	}
+
+	if len(required) > 0 {
+		cli.ShowHelp()
+		showInfoAs("Arguments is require", required)
+		exitProgram(1)
+	}
+}
+
+// checkForRelatedSupporting
+// TODO: it's should be implemented
+func (cli *LineService) checkForRelatedSupporting(item LineServiceItem) {
+
 }
 
 func (cli *LineService) ServiceCmdNew() {
 	cli.importItemsFromArgs()
-	cli.CheckForSupporting()
+
+	cli.SetItemSupported(LineServiceItem{
+		Name:  "h",
+		Level: 1,
+		Desc:  "Show this help and stop program",
+	})
+	cli.checkForSupporting()
+	cli.checkForRequire()
+}
+
+func getItemsByName(name string, coll []LineServiceItem) []*LineServiceItem {
+	res := make([]*LineServiceItem, 0)
+
+	for _, item := range coll {
+		if item.Name == name {
+			res = append(res, &item)
+		}
+	}
+
+	return res
+}
+
+func getItemByNameLevel(name string, level int, coll []LineServiceItem) *LineServiceItem {
+	for _, item := range coll {
+		if item.Name == name && (level == ALL_ITEMS || item.Level == level) {
+			return &item
+		}
+	}
+
+	return nil
+}
+
+func exitProgram(code int) {
+	os.Exit(code)
 }
 
 // GetArg
 // Getting item struct of argument by:
 // - name
 // - level, if greater or equal then 0 or all level if -1
-func (cli *LineService) GetArg(name string, level int) {
+func (cli *LineService) GetArg(name string, level int) *LineServiceItem {
+	return getItemByNameLevel(name, level, cli.items)
+}
 
+// GetArgValue
+// Getting item struct of argument by:
+// - name
+// - level, if greater or equal then 0 or all level if -1
+func (cli *LineService) GetArgValue(name string, level int, defaultValue string) string {
+	lsi := cli.GetArg(name, level)
+
+	if lsi != nil {
+		return lsi.DefaultValue
+	}
+
+	return defaultValue
 }
